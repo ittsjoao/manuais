@@ -17,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { authClient } from "@/utils/auth-client";
 import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
-import { de } from "zod/v4/locales";
 
 export function LoginForm({
   className,
@@ -35,20 +34,31 @@ export function LoginForm({
     setLoading(true);
 
     try {
-      const result = await authClient.signIn.email({
-        email,
-        password,
-      });
-
-      if (result.error) {
-        setError(result.error.message || "Erro ao fazer login");
-      } else {
-        navigate({ to: "/" });
-      }
+      // Usando os callbacks do Better Auth
+      await authClient.signIn.email(
+        {
+          email,
+          password,
+          callbackURL: "/", // URL de redirecionamento após login
+          rememberMe: true, // Manter sessão após fechar o navegador
+        },
+        {
+          onRequest: () => {
+            setLoading(true);
+          },
+          onSuccess: () => {
+            // Redirecionar após sucesso
+            navigate({ to: "/" });
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || "Erro ao fazer login");
+            setLoading(false);
+          },
+        },
+      );
     } catch (err) {
       setError("Erro ao conectar com o servidor");
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -86,7 +96,7 @@ export function LoginForm({
                 <div className="flex items-center">
                   <FieldLabel htmlFor="password">Senha</FieldLabel>
                   <a
-                    href="#"
+                    href="/forgot-password"
                     className="ml-auto inline-block text-sm underline-offset-4 hover:underline"
                   >
                     Esqueceu sua senha?
@@ -102,11 +112,17 @@ export function LoginForm({
                 />
               </Field>
               <Field>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Login"}
                 </Button>
                 <FieldDescription className="text-center">
-                  Não tem uma conta? <a href="/signup">Cadastre-se</a>
+                  Não tem uma conta?{" "}
+                  <a
+                    href="/signup"
+                    className="underline underline-offset-4 hover:text-primary"
+                  >
+                    Cadastre-se
+                  </a>
                 </FieldDescription>
               </Field>
             </FieldGroup>

@@ -30,7 +30,6 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     e.preventDefault();
     setError("");
 
-    // Validação básica
     if (password !== confirmPassword) {
       setError("As senhas não coincidem");
       return;
@@ -44,21 +43,29 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
     setLoading(true);
 
     try {
-      const result = await authClient.signUp.email({
-        email,
-        password,
-        name,
-      });
-
-      if (result.error) {
-        setError(result.error.message || "Erro ao criar conta");
-      } else {
-        navigate({ to: "/" });
-      }
+      await authClient.signUp.email(
+        {
+          email,
+          password,
+          name,
+          callbackURL: "/",
+        },
+        {
+          onRequest: () => {
+            setLoading(true);
+          },
+          onSuccess: () => {
+            navigate({ to: "/" });
+          },
+          onError: (ctx) => {
+            setError(ctx.error.message || "Erro ao criar conta");
+            setLoading(false);
+          },
+        },
+      );
     } catch (err) {
       setError("Erro ao conectar com o servidor");
       console.error(err);
-    } finally {
       setLoading(false);
     }
   };
@@ -133,16 +140,20 @@ export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
                 Por favor, confirme sua senha.
               </FieldDescription>
             </Field>
-            <FieldGroup>
-              <Field>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Criando conta..." : "Criar Conta"}
-                </Button>
-                <FieldDescription className="px-6 text-center">
-                  <a href="/login">Já tem uma conta?</a>
-                </FieldDescription>
-              </Field>
-            </FieldGroup>
+            <Field>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Criando conta..." : "Criar Conta"}
+              </Button>
+              <FieldDescription className="text-center">
+                Já tem uma conta?{" "}
+                <a
+                  href="/login"
+                  className="underline underline-offset-4 hover:text-primary"
+                >
+                  Faça login
+                </a>
+              </FieldDescription>
+            </Field>
           </FieldGroup>
         </form>
       </CardContent>

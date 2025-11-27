@@ -15,6 +15,8 @@ import { Route as SignupIndexRouteImport } from './routes/signup/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as LayoutConfigRouteImport } from './routes/_layout/config'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
+import { Route as LayoutManuaisDepartamentoRouteImport } from './routes/_layout/manuais/$departamento'
+import { Route as LayoutDepartamentosDepartamentoSlugRouteImport } from './routes/_layout/departamentos/$departamentoSlug'
 
 const LayoutRoute = LayoutRouteImport.update({
   id: '/_layout',
@@ -45,12 +47,26 @@ const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LayoutManuaisDepartamentoRoute =
+  LayoutManuaisDepartamentoRouteImport.update({
+    id: '/manuais/$departamento',
+    path: '/manuais/$departamento',
+    getParentRoute: () => LayoutRoute,
+  } as any)
+const LayoutDepartamentosDepartamentoSlugRoute =
+  LayoutDepartamentosDepartamentoSlugRouteImport.update({
+    id: '/departamentos/$departamentoSlug',
+    path: '/departamentos/$departamentoSlug',
+    getParentRoute: () => LayoutRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/config': typeof LayoutConfigRoute
   '/login': typeof LoginIndexRoute
   '/signup': typeof SignupIndexRoute
+  '/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
+  '/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +74,8 @@ export interface FileRoutesByTo {
   '/config': typeof LayoutConfigRoute
   '/login': typeof LoginIndexRoute
   '/signup': typeof SignupIndexRoute
+  '/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
+  '/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
@@ -67,13 +85,29 @@ export interface FileRoutesById {
   '/_layout/config': typeof LayoutConfigRoute
   '/login/': typeof LoginIndexRoute
   '/signup/': typeof SignupIndexRoute
+  '/_layout/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
+  '/_layout/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/config' | '/login' | '/signup' | '/api/trpc/$'
+  fullPaths:
+    | '/'
+    | '/config'
+    | '/login'
+    | '/signup'
+    | '/departamentos/$departamentoSlug'
+    | '/manuais/$departamento'
+    | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/config' | '/login' | '/signup' | '/api/trpc/$'
+  to:
+    | '/'
+    | '/config'
+    | '/login'
+    | '/signup'
+    | '/departamentos/$departamentoSlug'
+    | '/manuais/$departamento'
+    | '/api/trpc/$'
   id:
     | '__root__'
     | '/'
@@ -81,6 +115,8 @@ export interface FileRouteTypes {
     | '/_layout/config'
     | '/login/'
     | '/signup/'
+    | '/_layout/departamentos/$departamentoSlug'
+    | '/_layout/manuais/$departamento'
     | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
@@ -136,15 +172,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_layout/manuais/$departamento': {
+      id: '/_layout/manuais/$departamento'
+      path: '/manuais/$departamento'
+      fullPath: '/manuais/$departamento'
+      preLoaderRoute: typeof LayoutManuaisDepartamentoRouteImport
+      parentRoute: typeof LayoutRoute
+    }
+    '/_layout/departamentos/$departamentoSlug': {
+      id: '/_layout/departamentos/$departamentoSlug'
+      path: '/departamentos/$departamentoSlug'
+      fullPath: '/departamentos/$departamentoSlug'
+      preLoaderRoute: typeof LayoutDepartamentosDepartamentoSlugRouteImport
+      parentRoute: typeof LayoutRoute
+    }
   }
 }
 
 interface LayoutRouteChildren {
   LayoutConfigRoute: typeof LayoutConfigRoute
+  LayoutDepartamentosDepartamentoSlugRoute: typeof LayoutDepartamentosDepartamentoSlugRoute
+  LayoutManuaisDepartamentoRoute: typeof LayoutManuaisDepartamentoRoute
 }
 
 const LayoutRouteChildren: LayoutRouteChildren = {
   LayoutConfigRoute: LayoutConfigRoute,
+  LayoutDepartamentosDepartamentoSlugRoute:
+    LayoutDepartamentosDepartamentoSlugRoute,
+  LayoutManuaisDepartamentoRoute: LayoutManuaisDepartamentoRoute,
 }
 
 const LayoutRouteWithChildren =

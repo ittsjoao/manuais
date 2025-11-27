@@ -1,17 +1,23 @@
 import * as React from "react";
-import { GalleryVerticalEnd, Minus, Plus } from "lucide-react";
-
-import { SearchForm } from "@/components/search-form";
+import {
+  useParams,
+  useNavigate,
+  useRouteContext,
+} from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { ChevronRight, FileText, Plus, Minus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -21,11 +27,11 @@ import {
   SidebarMenuSubItem,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { VersionSwitcher } from "./version-switcher";
+import { SearchForm } from "./search-form";
 import { NavUser } from "./nav-user";
 import { authClient } from "@/utils/auth-client";
-import { prisma } from "@/prisma";
-import { VersionSwitcher } from "./version-switcher";
-// This is sample data.
+
 const navMain = [
   {
     title: "Início",
@@ -36,25 +42,25 @@ const navMain = [
   },
 ];
 
-  return departamentos.map((departamento) => ({
-    id: departamento.id,
-    nome: departamento.nome,
-    programas: departamento.programas.map((programa) => ({
-      id: programa.id,
-      nome: programa.nome,
-    })),
-  }));
-}
-
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function AppSidebar() {
+  const params = useParams({ strict: false });
+  const navigate = useNavigate();
+  const { trpc } = useRouteContext({ strict: false }) as any;
+  const departamento = (params as any).departamento;
   const { data: session } = authClient.useSession();
 
-  const { data: departamentosData } = trpc.manuais.getDepartamentos.useQuery();
-
-  const { data: manuaisData } = trpc.manuais.getDepartamentoCompleto.useQuery(
-    { departamentoSlug: departamento || "" },
-    { enabled: !!departamento },
+  // Buscar todos os departamentos para o VersionSwitcher
+  const { data: departamentosData } = useQuery(
+    trpc.departamentos.list.queryOptions(),
   );
+
+  // Buscar dados do departamento específico (se houver)
+  const { data: departamentoCompleto } = useQuery({
+    ...trpc.departamentos.getBySlug.queryOptions({
+      slug: departamento || "",
+    }),
+    enabled: !!departamento,
+  });
 
   const user = session?.user
     ? {
@@ -64,18 +70,50 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
     : {
         name: "Visitante",
-        email: "Não informado",
+        email: "Não logado",
         avatar: "",
       };
 
-  const departamentosList = departamentosData?.map((dept) => dept.nome) || [];
+  // Converter departamentos para o formato do VersionSwitcher
+  const departamentosList = React.useMemo(() => {
+    return (departamentosData || []).map((dept: any) => ({
+      id: dept.id,
+      nome: dept.nome,
+      slug: dept.slug,
+    }));
+  }, [departamentosData]);
+  // Obter o nome do departamento atual para o VersionSwitcher
+  const currentDepartamentoName = React.useMemo(() => {
+    return departamentoCompleto?.nome || "";
+  }, [departamentoCompleto]);
+
+  const nomeParaSlug = React.useMemo(() => {
+    const map = new Map<string, string>();
+    departamentosList.forEach((d) => {
+      map.set(d.nome, d.slug);
+    });
+    return map;
+  }, [departamentosList]);
 
   return (
-    <Sidebar {...props}>
+    <Sidebar>
       <SidebarHeader>
-        <VersionSwitcher versions={departamentosList} defaultVersion="" />
+        <VersionSwitcher
+          versions={departamentosList.map((d) => d.nome)}
+          currentDepartamento={currentDepartamentoName}
+          onDepartamentoSelect={(nome: string) => {
+            const slug = nomeParaSlug.get(nome);
+            if (slug) {
+              navigate({
+                to: "/manuais/$departamento",
+                params: { departamento: slug },
+              });
+            }
+          }}
+        />
         <SearchForm />
       </SidebarHeader>
+
       <SidebarContent>
         <SidebarGroup>
           <SidebarMenu>
@@ -111,10 +149,62 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             ))}
           </SidebarMenu>
         </SidebarGroup>
+
+        {/* Mostrar programas do departamento selecionado */}
+        {departamento && departamentoCompleto && (
+          <SidebarGroup>
+            <SidebarGroupLabel>Programas</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {departamentoCompleto.programas?.map((programa: any) => (
+                  <Collapsible key={programa.id} className="group/collapsible">
+                    <SidebarMenuItem>
+                      <CollapsibleTrigger asChild>
+                        <SidebarMenuButton>
+                          <span className="text-sm font-mono">
+                            {programa.nome}
+                          </span>
+                          <ChevronRight className="ml-auto transition-transform group-data-[state=open]/collapsible:rotate-90" />
+                        </SidebarMenuButton>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent>
+                        <SidebarMenuSub>
+                          {programa.manuais?.map((pm: any) => (
+                            <SidebarMenuSubItem key={pm.id}>
+                              <SidebarMenuSubButton
+                                onClick={() =>
+                                  navigate({
+                                    to: "/manuais/$departamento",
+                                    params: { departamento },
+                                    search: {
+                                      manualId: pm.manual.id.toString(),
+                                    },
+                                  })
+                                }
+                                className="flex items-center gap-2 whitespace-nowrap overflow-hidden"
+                              >
+                                <FileText className="w-4 h-4" />
+                                <span className="overflow-auto text-ellipsis">
+                                  {pm.manual.titulo}
+                                </span>
+                              </SidebarMenuSubButton>
+                            </SidebarMenuSubItem>
+                          ))}
+                        </SidebarMenuSub>
+                      </CollapsibleContent>
+                    </SidebarMenuItem>
+                  </Collapsible>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
+
       <SidebarFooter>
         <NavUser user={user} />
       </SidebarFooter>
+
       <SidebarRail />
     </Sidebar>
   );

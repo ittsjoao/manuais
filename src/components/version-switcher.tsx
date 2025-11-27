@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import * as React from "react"; // Importar React
 import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react";
 
 import {
@@ -15,15 +15,21 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+interface Departamento {
+  id: number;
+  nome: string;
+  slug: string;
+}
+
 export function VersionSwitcher({
   versions,
-  defaultVersion,
+  currentDepartamento,
+  onDepartamentoSelect,
 }: {
   versions: string[];
-  defaultVersion: string;
+  currentDepartamento: string;
+  onDepartamentoSelect: (slug: string) => void;
 }) {
-  const [selectedVersion, setSelectedVersion] = React.useState(defaultVersion);
-
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -37,23 +43,27 @@ export function VersionSwitcher({
                 <GalleryVerticalEnd className="size-4" />
               </div>
               <div className="flex flex-col gap-0.5 leading-none">
-                <span className="font-medium">Documentation</span>
-                <span className="">v{selectedVersion}</span>
+                <span className="font-medium">Departamento</span>
+                <span className="text-xs">
+                  {currentDepartamento || "Selecione..."}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width)"
+            className="w-[--radix-dropdown-menu-trigger-width]"
             align="start"
           >
             {versions.map((version) => (
               <DropdownMenuItem
                 key={version}
-                onSelect={() => setSelectedVersion(version)}
+                onClick={() => onDepartamentoSelect(version)}
               >
-                v{version}{" "}
-                {version === selectedVersion && <Check className="ml-auto" />}
+                {version}{" "}
+                {version === currentDepartamento && (
+                  <Check className="ml-auto" />
+                )}
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>
