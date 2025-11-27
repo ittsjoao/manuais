@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,150 +14,127 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { authClient } from "@/utils/auth-client";
 import { useState } from "react";
+import { signUp } from "@/utils/auth-client";
 import { useNavigate } from "@tanstack/react-router";
 
-export function SignupForm({ ...props }: React.ComponentProps<typeof Card>) {
+export function SignupForm({
+  className,
+  ...props
+}: React.ComponentProps<"div">) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [error, setError] = useState("");
+  const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (password !== confirmPassword) {
-      setError("As senhas não coincidem");
-      return;
-    }
-
-    if (password.length < 8) {
-      setError("A senha deve ter pelo menos 8 caracteres");
-      return;
-    }
-
-    setLoading(true);
-
-    try {
-      await authClient.signUp.email(
-        {
-          email,
-          password,
-          name,
-          callbackURL: "/",
-        },
-        {
-          onRequest: () => {
-            setLoading(true);
-          },
-          onSuccess: () => {
-            navigate({ to: "/" });
-          },
-          onError: (ctx) => {
-            setError(ctx.error.message || "Erro ao criar conta");
-            setLoading(false);
-          },
-        },
-      );
-    } catch (err) {
-      setError("Erro ao conectar com o servidor");
-      console.error(err);
-      setLoading(false);
-    }
-  };
-
   return (
-    <Card {...props}>
-      <CardHeader>
-        <CardTitle>Crie sua conta</CardTitle>
-        <CardDescription>
-          Preencha as informações abaixo para criar sua conta
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit}>
-          <FieldGroup>
-            {error && (
-              <div className="text-red-500 text-sm p-2 bg-red-50 rounded">
-                {error}
-              </div>
-            )}
-            <Field>
-              <FieldLabel htmlFor="name">Nome Completo</FieldLabel>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Nome Sobrenome"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="email">Email</FieldLabel>
-              <Input
-                id="email"
-                type="email"
-                placeholder="seu.email@austercontabil.com.br"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={loading}
-              />
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="password">Senha</FieldLabel>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <FieldDescription>
-                Deve ter pelo menos 8 caracteres.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <FieldLabel htmlFor="confirm-password">
-                Confirmar Senha
-              </FieldLabel>
-              <Input
-                id="confirm-password"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                disabled={loading}
-              />
-              <FieldDescription>
-                Por favor, confirme sua senha.
-              </FieldDescription>
-            </Field>
-            <Field>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Criando conta..." : "Criar Conta"}
-              </Button>
-              <FieldDescription className="text-center">
-                Já tem uma conta?{" "}
-                <a
-                  href="/login"
-                  className="underline underline-offset-4 hover:text-primary"
+    <div className={cn("flex flex-col gap-6", className)} {...props}>
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-xl">Crie sua conta</CardTitle>
+          <CardDescription>
+            Entre com seu e-mail para criação da conta
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <form>
+            <FieldGroup>
+              <Field>
+                <FieldLabel htmlFor="name">Nome Completo</FieldLabel>
+                <Input
+                  id="name"
+                  type="text"
+                  placeholder="Nome Sobrenome"
+                  required
+                  onChange={(e) => setName(e.target.value)}
+                  value={name}
+                />
+              </Field>
+              <Field>
+                <FieldLabel htmlFor="email">Email</FieldLabel>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="seu.email@austercontabil.com.br"
+                  required
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                  }}
+                  value={email}
+                />
+              </Field>
+              <Field>
+                <Field className="grid grid-cols-2 gap-4">
+                  <Field>
+                    <FieldLabel htmlFor="password">Senha</FieldLabel>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      autoComplete="new-password"
+                      placeholder="Senha"
+                    />
+                  </Field>
+                  <Field>
+                    <FieldLabel htmlFor="confirm-password">
+                      Confirme sua senha
+                    </FieldLabel>
+                    <Input
+                      id="password_confirmation"
+                      type="password"
+                      value={passwordConfirmation}
+                      onChange={(e) => setPasswordConfirmation(e.target.value)}
+                      autoComplete="new-password"
+                      placeholder="Confirme sua senha"
+                    />
+                  </Field>
+                </Field>
+                <FieldDescription>
+                  A senha deve ter pelo menos 8 caracteres.
+                </FieldDescription>
+              </Field>
+              <Field>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading}
+                  onClick={async () => {
+                    await signUp.email({
+                      email,
+                      password,
+                      name,
+                      callbackURL: "/manuais/pessoal",
+                      fetchOptions: {
+                        onResponse: () => {
+                          setLoading(false);
+                        },
+                        onRequest: () => {
+                          setLoading(true);
+                        },
+                        onSuccess: (ctx) => {
+                          navigate({ to: "/" });
+                        },
+                      },
+                    });
+                  }}
                 >
-                  Faça login
-                </a>
-              </FieldDescription>
-            </Field>
-          </FieldGroup>
-        </form>
-      </CardContent>
-    </Card>
+                  Criar Conta
+                </Button>
+                <FieldDescription className="text-center">
+                  Já tem uma conta? <a href="/login">Entrar</a>
+                </FieldDescription>
+              </Field>
+            </FieldGroup>
+          </form>
+        </CardContent>
+      </Card>
+      {/*<FieldDescription className="px-6 text-center">
+        Ao clicar em continuar, você concorda com nossos <a href="#">Termos de Serviço</a>{" "}
+        e <a href="#">Política de Privacidade</a>.
+      </FieldDescription>*/}
+    </div>
   );
 }

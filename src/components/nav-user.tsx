@@ -25,6 +25,8 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { authClient } from "@/utils/auth-client";
+import { useNavigate } from "@tanstack/react-router";
 
 export function NavUser({
   user,
@@ -36,6 +38,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const navigate = useNavigate();
 
   return (
     <SidebarMenu>
@@ -98,8 +101,22 @@ export function NavUser({
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <LogOut />
+            <DropdownMenuItem
+              onClick={async () => {
+                try {
+                  await authClient.signOut({
+                    fetchOptions: {
+                      onSuccess: () => {
+                        navigate({ to: "/login" });
+                      },
+                    },
+                  });
+                } catch (error) {
+                  console.error("Erro ao fazer logout:", error);
+                }
+              }}
+            >
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>

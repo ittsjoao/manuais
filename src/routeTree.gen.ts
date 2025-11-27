@@ -15,6 +15,7 @@ import { Route as SignupIndexRouteImport } from './routes/signup/index'
 import { Route as LoginIndexRouteImport } from './routes/login/index'
 import { Route as LayoutConfigRouteImport } from './routes/_layout/config'
 import { Route as ApiTrpcSplatRouteImport } from './routes/api.trpc.$'
+import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
 import { Route as LayoutManuaisDepartamentoRouteImport } from './routes/_layout/manuais/$departamento'
 import { Route as LayoutDepartamentosDepartamentoSlugRouteImport } from './routes/_layout/departamentos/$departamentoSlug'
 
@@ -47,6 +48,11 @@ const ApiTrpcSplatRoute = ApiTrpcSplatRouteImport.update({
   path: '/api/trpc/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
+  id: '/api/auth/$',
+  path: '/api/auth/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LayoutManuaisDepartamentoRoute =
   LayoutManuaisDepartamentoRouteImport.update({
     id: '/manuais/$departamento',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupIndexRoute
   '/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
   '/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesByTo {
@@ -76,6 +83,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupIndexRoute
   '/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
   '/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRoutesById {
@@ -87,6 +95,7 @@ export interface FileRoutesById {
   '/signup/': typeof SignupIndexRoute
   '/_layout/departamentos/$departamentoSlug': typeof LayoutDepartamentosDepartamentoSlugRoute
   '/_layout/manuais/$departamento': typeof LayoutManuaisDepartamentoRoute
+  '/api/auth/$': typeof ApiAuthSplatRoute
   '/api/trpc/$': typeof ApiTrpcSplatRoute
 }
 export interface FileRouteTypes {
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/departamentos/$departamentoSlug'
     | '/manuais/$departamento'
+    | '/api/auth/$'
     | '/api/trpc/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -107,6 +117,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/departamentos/$departamentoSlug'
     | '/manuais/$departamento'
+    | '/api/auth/$'
     | '/api/trpc/$'
   id:
     | '__root__'
@@ -117,6 +128,7 @@ export interface FileRouteTypes {
     | '/signup/'
     | '/_layout/departamentos/$departamentoSlug'
     | '/_layout/manuais/$departamento'
+    | '/api/auth/$'
     | '/api/trpc/$'
   fileRoutesById: FileRoutesById
 }
@@ -125,6 +137,7 @@ export interface RootRouteChildren {
   LayoutRoute: typeof LayoutRouteWithChildren
   LoginIndexRoute: typeof LoginIndexRoute
   SignupIndexRoute: typeof SignupIndexRoute
+  ApiAuthSplatRoute: typeof ApiAuthSplatRoute
   ApiTrpcSplatRoute: typeof ApiTrpcSplatRoute
 }
 
@@ -172,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiTrpcSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/auth/$': {
+      id: '/api/auth/$'
+      path: '/api/auth/$'
+      fullPath: '/api/auth/$'
+      preLoaderRoute: typeof ApiAuthSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_layout/manuais/$departamento': {
       id: '/_layout/manuais/$departamento'
       path: '/manuais/$departamento'
@@ -210,6 +230,7 @@ const rootRouteChildren: RootRouteChildren = {
   LayoutRoute: LayoutRouteWithChildren,
   LoginIndexRoute: LoginIndexRoute,
   SignupIndexRoute: SignupIndexRoute,
+  ApiAuthSplatRoute: ApiAuthSplatRoute,
   ApiTrpcSplatRoute: ApiTrpcSplatRoute,
 }
 export const routeTree = rootRouteImport
