@@ -1,6 +1,3 @@
-"use client";
-
-import * as React from "react"; // Importar React
 import { Check, ChevronsUpDown, GalleryVerticalEnd } from "lucide-react";
 
 import {

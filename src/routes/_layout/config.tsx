@@ -1,9 +1,10 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute } from "@tanstack/react-router";
+import Tiptap from "@/components/Tiptap";
 
-export const Route = createFileRoute('/_layout/config')({
+export const Route = createFileRoute("/_layout/config")({
   component: RouteComponent,
-})
+});
 
 function RouteComponent() {
-  return <div>Hello "/_layout/config"!</div>
+  return <Tiptap />;
 }

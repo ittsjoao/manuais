@@ -1,7 +1,13 @@
-import { createFileRoute } from "@tanstack/react-router";
+"use client";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { FileText, Loader2 } from "lucide-react";
-import ReactMarkdown from "react-markdown";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { Editor } from "@tiptap/core";
+import { trpcRouter, TRPCRouter } from "@/integrations/trpc/router";
+import { createServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/_layout/manuais/$departamento")({
   component: ManualPage,
@@ -17,76 +23,74 @@ type Manual = {
 };
 
 function ManualPage() {
+  const [title, setTitle] = useState("");
+  const [editor, setEditor] = useState<Editor | null>(null);
+  const [saving, setSaving] = useState(false);
+  const router = useRouter();
+
   const { departamento } = Route.useParams();
-  const { trpc } = Route.useRouteContext();
 
-  // Obter os parâmetros de busca de forma segura
-  const searchParams = Route.useSearch() as { manualId?: string };
-  const manualId = searchParams.manualId
-    ? parseInt(searchParams.manualId)
-    : null;
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const queryOptions = trpc.manuais.getDepartamentoCompleto.queryOptions({
-    departamentoSlug: departamento,
-  });
+    if (!title.trim() || !editor) {
+      alert("Por favor, preencha todos os campos");
+      return;
+    }
 
-  const { data, isLoading, error } = useSuspenseQuery(queryOptions);
+    setSaving(true);
+    try {
+      const mutation = createServerFn({
+        method: "POST",
+      }).handler(async () => { return prisma. });
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-full">
-        <Loader2 className="w-8 h-8 animate-spin" />
-      </div>
-    );
-  }
+      console.log("Manual criado:", mutation.data);
+      alert("Manual criado com sucesso!");
 
-  if (error || !data) {
-    return (
-      <div className="p-8">
-        <h1 className="text-2xl font-bold text-red-600">
-          Departamento não encontrado
-        </h1>
-        <p className="text-gray-600 mt-2">
-          O departamento "{departamento}" não existe.
-        </p>
-      </div>
-    );
-  }
-
-  const { programas } = data;
-  const manualAtivo = manualId
-    ? programas.flatMap((p) => p.manuais).find((m) => m.manual.id === manualId)
-    : null;
+      if (!mutation.isSuccess) throw new Error("Erro ao criar manual");
+    } catch (error) {
+      console.error("Erro ao criar manual:", error);
+      alert("Erro ao criar manual");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="flex-1">
-      {manualAtivo ? (
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold mb-2">
-            {manualAtivo.manual.titulo}
-          </h1>
-          <div className="flex gap-2 mb-6">
-            {manualAtivo.manual.tags?.map((tag: string) => (
-              <span
-                key={tag}
-                className="px-2 py-1 bg-blue-100 text-blue-700 text-xs rounded"
+      <div className="flex items-center justify-center h-full text-gray-500">
+        <div className="text-center">
+          <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
+          <p>Selecione um manual na sidebar para visualizar</p>
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <Input
+              placeholder="Digite o título do manual"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={saving}
+            />
+            <div className="border rounded-lg">
+              <SimpleEditor onEditorReady={setEditor} />
+            </div>
+            <div className="flex gap-4">
+              <Button type="submit" disabled={saving}>
+                {saving ? "Salvando..." : "Salvar"}
+              </Button>
+              <Button
+                type="button"
+                onClick={() => {
+                  setTitle("");
+                  editor?.commands.clearContent();
+                }}
+                disabled={saving}
               >
-                {tag}
-              </span>
-            ))}
-          </div>
-          <div className="prose prose-slate max-w-none">
-            <ReactMarkdown>{manualAtivo.manual.conteudo}</ReactMarkdown>
-          </div>
+                Cancelar
+              </Button>
+            </div>
+          </form>
         </div>
-      ) : (
-        <div className="flex items-center justify-center h-full text-gray-500">
-          <div className="text-center">
-            <FileText className="w-16 h-16 mx-auto mb-4 opacity-20" />
-            <p>Selecione um manual na sidebar para visualizar</p>
-          </div>
-        </div>
-      )}
+      </div>
     </div>
   );
 }
