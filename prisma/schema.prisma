@@ -16,7 +16,7 @@ model Departamento {
   ordem     Int        @default(0)
   createdAt DateTime   @default(now()) @map("criado_em")
   updatedAt DateTime   @updatedAt @map("atualizado_em")
-  programas Programa[]
+  programas DepartamentoPrograma[]
 
   @@map("departamento")
 }
@@ -26,13 +26,24 @@ model Programa {
   nome           String
   url            String?
   ordem          Int              @default(0)
-  departamentoId Int[]            @map("departamento_id")
-  departamento   Departamento     @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
   createdAt      DateTime         @default(now()) @map("criado_em")
   updatedAt      DateTime         @updatedAt @map("atualizado_em")
+  departamentos  DepartamentoPrograma[]
   manuais        ProgramaManual[]
 
   @@map("programa")
+}
+
+// Tabela de junção para relação many-to-many entre Departamento e Programa
+model DepartamentoPrograma {
+  id             Int          @id @default(autoincrement())
+  departamentoId Int          @map("departamento_id")
+  programaId     Int          @map("programa_id")
+  departamento   Departamento @relation(fields: [departamentoId], references: [id], onDelete: Cascade)
+  programa       Programa     @relation(fields: [programaId], references: [id], onDelete: Cascade)
+
+  @@unique([departamentoId, programaId])
+  @@map("departamento_programa")
 }
 
 model Manual {
@@ -62,7 +73,7 @@ model ProgramaManual {
 model User {
   id            String    @id
   name          String
-  email         String
+  email         String    @unique
   emailVerified Boolean   @default(false)
   image         String?
   createdAt     DateTime  @default(now())
@@ -70,14 +81,13 @@ model User {
   sessions      Session[]
   accounts      Account[]
 
-  @@unique([email])
   @@map("user")
 }
 
 model Session {
   id        String   @id
   expiresAt DateTime
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   ipAddress String?
@@ -85,7 +95,6 @@ model Session {
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([token])
   @@index([userId])
   @@map("session")
 }

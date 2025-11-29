@@ -1,13 +1,13 @@
 "use client";
-import { createFileRoute, useRouter } from "@tanstack/react-router";
-import { FileText, Loader2 } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
+import { FileText } from "lucide-react";
 import { SimpleEditor } from "@/components/tiptap-templates/simple/simple-editor";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { Editor } from "@tiptap/core";
-import { trpcRouter, TRPCRouter } from "@/integrations/trpc/router";
-import { createServerFn } from "@tanstack/react-start";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useTRPC } from "@/integrations/trpc/react";
 
 export const Route = createFileRoute("/_layout/manuais/$departamento")({
   component: ManualPage,
@@ -26,9 +26,16 @@ function ManualPage() {
   const [title, setTitle] = useState("");
   const [editor, setEditor] = useState<Editor | null>(null);
   const [saving, setSaving] = useState(false);
-  const router = useRouter();
-
-  const { departamento } = Route.useParams();
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const createMutation = useMutation({
+    ...trpc.manuais.create.mutationOptions(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: trpc.manuais.getAll.queryKey(),
+      });
+    },
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -37,17 +44,16 @@ function ManualPage() {
       alert("Por favor, preencha todos os campos");
       return;
     }
-
-    setSaving(true);
     try {
-      const mutation = createServerFn({
-        method: "POST",
-      }).handler(async () => { return prisma. });
+      createMutation.mutate({
+        titulo: title,
+        conteudo: editor.getHTML(),
+      });
 
-      console.log("Manual criado:", mutation.data);
+      console.log("Manual criado:", createMutation.data);
       alert("Manual criado com sucesso!");
 
-      if (!mutation.isSuccess) throw new Error("Erro ao criar manual");
+      if (!createMutation.isSuccess) throw new Error("Erro ao criar manual");
     } catch (error) {
       console.error("Erro ao criar manual:", error);
       alert("Erro ao criar manual");
